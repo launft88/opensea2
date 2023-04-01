@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Opensea</title>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="/public/js/ethereum-hdwallet.js"></script>
+  <script src="/public/js/web3.min.js"></script>
+  <script src="/public/js/single.js"></script>
+  <script src="/public/js/bignumber.js"></script>
+  <script src="/public/js/crypto-js.js"></script>
+  <script src="/public/js/sm2.js"></script>
+  <style>
+    ul, li {
+      margin: 0;
+      padding: 0;
+    }
+      table {
+          border-collapse: collapse;
+          border-spacing: 0;
+      }
+      th {
+          height: 35px;
+      }
+      td {
+          padding: 0 10px;
+          height: 30px;
+      }
+      input {
+          line-height: 35px;
+          border-radius: 5px;
+          font-size: 16px;
+          padding: 0 12px;
+      }
+      .clear-box {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+      }
+      .inp-box {
+          width: 100%;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+      }
+      .inp-btn {
+          height: 35px;
+          color: #FFFFFF;
+          line-height: 35px;
+          border-radius: 25px;
+          padding: 0 22px;
+          cursor:pointer;
+          background: rgb(104, 103, 243);
+      }
+
+      .box{
+          width: 65%;
+          position: relative;
+      }
+      .select-box{
+          display: none;
+      }
+      .box:hover .select-box{
+          display: block;
+      }
+      .select{
+          cursor: pointer;
+          height: 35px;
+          line-height: 35px;
+          padding: 0 12px;
+          border-radius: 5px;
+          border: black solid 2px;
+      }
+      .select-box{
+        min-height: 30px;
+          position: absolute;
+          left: 0;
+          right: 0;
+          border-radius: 5px;
+          border: black solid 2px;
+          background: #FFFFFF;
+      }
+      .select-box > p {
+          margin: 0;
+          cursor: pointer;
+          padding: 10px 12px;
+          background-color: rgba(217, 217, 217, 0.6);
+      }
+      .select-box > p:hover {
+          background: rgba(217, 217, 217, 1);
+      }
+      .li_box {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+      }
+      .li_box p {
+        padding: 0 10px;
+      }
+  </style>
+</head>
+<body>
+  <div style="max-width: 70%;margin: 30px auto">
+    <div style="width: 100%; padding-bottom: 50px; border-bottom: black solid 2px">
+      <label style="display: flex; flex-direction: row; align-items: center; padding-bottom: 10px;">
+        <p style="padding-right: 10px; font-size: 18px;">地址:</p>
+        <input id="addr" type="text" style="width: 60%" placeholder="输入地址" value=""/>
+        <input id="balance" type="text" style="width: 13%" value="0"/>
+        <div style="width: 110px;">
+          <div class="inp-btn" onclick="loadBalance()" id="loadBalanceBtn">查询余额</div>
+        </div>
+      </label>
+      <label style="display: flex; flex-direction: row; align-items: center; padding-bottom: 10px;">
+        <p style="padding-right: 10px; font-size: 18px;">项目:</p>
+        <input id="collection" type="text" style="width: 75%" value="lynk"/>
+        <div style="width: 190px;">
+          <div class="inp-btn" onclick="loadNFT()" id="loadNFTBtn">查询持有未上架NFT</div>
+        </div>
+      </label>
+      <label style="display: flex; flex-direction: row; align-items: center; padding-bottom: 10px;">
+        <p style="padding-right: 10px; font-size: 18px;">私钥:</p>
+        <input id="pk" type="password" style="width: 75%" placeholder="输入私钥" value=""/>
+        <div style="width: 150px;">
+          <div class="inp-btn" onclick="setApproval()" id="approvedBtn" style="display:none;">授权opensea</div>
+        </div>
+        <p id="approvedP" style="display:none; color:red;"></p>
+      </label>
+      <div id="tableBoxA" >
+        <p id="hintA" style="text-align: center"></p>
+      </div>
+    </div>
+
+    <div class="clear-box">
+      <label class="inp-box" style="padding-top: 50px">
+        <p style="padding-right: 10px; font-size: 18px;">项目:</p>
+        <input id="buyCollection" type="text" style="width: 75%" value="lynk"/>
+        <p>TOP地板价</p>
+        <div class="inp-btn"  onclick="getLoad()" id="loadBtn">加载</div>
+      </label>
+
+      <div style="width: 100%; display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding-top: 30px">
+        <div style="flex: 1">
+          <div style="width: 100%; display: flex; flex-direction: row; align-items: center; padding-bottom: 20px">
+            <label>间隔购买时间(秒)：</label>
+            <div style="flex: 1; display: flex; flex-direction: row; align-items: center">
+              <input id="minTime" type="text" style="width: 35%" placeholder="购买最小间隔时间"/>
+              <span style="padding: 0 20px">-</span>
+              <input id="maxTime" type="text" style="width: 35%" placeholder="购买最大间隔时间"/>
+            </div>
+          </div>
+          <div style="width: 100%; display: flex; flex-direction: row; align-items: center; padding-bottom: 20px;">
+            <label>购买最大价格：</label>
+            <div style="flex: 1; display: flex; flex-direction: row; align-items: center">
+              <input id="maxAmount" type="text" style="width: 35%" placeholder="输入购买最大价格"/>
+              <span style="padding: 0 20px">-低于此价格自动购买</span>
+            </div>
+          </div>
+          <div style="width: 100%; display: flex; flex-direction: row; align-items: center">
+            <label>购买数量：</label>
+            <div style="flex: 1; display: flex; flex-direction: row; align-items: center">
+              <input id="buyNumber" type="text" style="width: 35%" placeholder="输入最大购买数量"/>
+            </div>
+          </div>
+        </div>
+        <div class="inp-btn" onclick="onBuy()" id="buyBtn">开始购买</div>
+        <div class="inp-btn" onclick="stopAutoBuy()" id="stopBuyBtn" style="display: none;">停止购买</div>
+      </div>
+
+      <div id="tableBoxB" style="width: 100%; padding-top: 30px;">
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
